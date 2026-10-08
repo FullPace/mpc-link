@@ -28,7 +28,7 @@ main { flex:1 0 auto; }
   margin:0 auto; padding:18px 28px; }
 .site-header__logo { width:clamp(180px, 36vw, 260px); height:auto; display:block; }
 .app-name { color:#fff; font-size:20px; font-weight:700; letter-spacing:.02em; white-space:nowrap; }
-.app-name span { color:var(--cyan); }
+.app-name span { color:var(--red); }
 
 .page { max-width:820px; margin-inline:auto; padding:36px 28px 64px; width:100%; }
 .page h1 { font-size:clamp(26px, 5vw, 34px); margin:0 0 6px; line-height:1.2; }
