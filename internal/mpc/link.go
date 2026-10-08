@@ -42,7 +42,9 @@ var SSHFS []byte
 func Quote(s string) string { return "'" + strings.ReplaceAll(s, "'", `'\''`) + "'" }
 
 // Dial opens an SSH connection to the MPC as root. The host key is remembered on first use (*hostKey empty) and
-// checked afterwards, like ssh's known_hosts.
+// checked afterwards, like ssh's known_hosts. Only the Ed25519 key is used: the MPC makes a new ECDSA key on every
+// boot (in the /etc overlay), while its Ed25519 key comes with the firmware image and stays. A remembered key of
+// another type (from version 0.1.0, which took the ECDSA key) is replaced once.
 func Dial(host string, hostKey *string) (*ssh.Client, error) {
 	cfg := &ssh.ClientConfig{
 		User: "root",
@@ -50,9 +52,10 @@ func Dial(host string, hostKey *string) (*ssh.Client, error) {
 			ssh.Password(""),
 			ssh.KeyboardInteractive(func(string, string, []string, []bool) ([]string, error) { return nil, nil }),
 		},
+		HostKeyAlgorithms: []string{ssh.KeyAlgoED25519},
 		HostKeyCallback: func(_ string, _ net.Addr, key ssh.PublicKey) error {
 			got := base64.StdEncoding.EncodeToString(key.Marshal())
-			if *hostKey == "" {
+			if *hostKey == "" || !strings.HasPrefix(*hostKey, "AAAAC3NzaC1lZDI1NTE5") { // empty, or not an Ed25519 key
 				*hostKey = got
 				return nil
 			}
@@ -178,9 +181,9 @@ func (p *pipe) Close() error                { return p.w.Close() }
 
 // Status of a Link, for the menu bar.
 type Status struct {
-	Connected bool
-	Mount     string
-	Err       string
+	Connected bool   `json:"connected"`
+	Mount     string `json:"mount"`
+	Err       string `json:"err"`
 }
 
 // Link keeps the folders mounted on the MPC: it connects, mounts, and reconnects after a lost connection.
@@ -252,7 +255,7 @@ func (l *Link) once(cfg *config.Config, name string, save func(), stop <-chan st
 		return err
 	}
 	defer c.Close()
-	if known == "" && cfg.HostKey != "" {
+	if known != cfg.HostKey {
 		save()
 	}
 	if err := EnsureSSHFS(c); err != nil {
