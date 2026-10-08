@@ -41,7 +41,9 @@ main { flex:1 0 auto; }
 .field label { font-size:14px; font-weight:600; }
 input { font:inherit; color:var(--text); background:var(--bg); border:1px solid var(--edge-dark); border-radius:var(--radius-sm);
   padding:10px 12px; width:100%; transition:border-color var(--transition); }
-input:focus { outline:none; border-color:var(--cyan-dim); }
+input:focus, select:focus { outline:none; border-color:var(--cyan-dim); }
+select { font:inherit; color:var(--text); background:var(--bg); border:1px solid var(--edge-dark); border-radius:var(--radius-sm);
+  padding:10px 12px; width:100%; }
 .row { display:flex; gap:10px; align-items:center; }
 .row input { flex:1; }
 .hint { color:var(--text-dim); font-size:14px; margin:4px 0 0; }
@@ -112,9 +114,14 @@ li .path { flex:1; color:var(--text-dim); font-size:14px; overflow:hidden; text-
         <div id="found" class="found"></div>
       </div>
       <div class="field">
+        <label for="drive">Drive on the MPC</label>
+        <select id="drive"></select>
+        <p class="hint" id="driveHint">Where your folders show up in the MPC's browser.</p>
+      </div>
+      <div class="field">
         <label for="cname">Folder name on the MPC</label>
         <input id="cname" autocomplete="off">
-        <p class="hint">Your folders show up under <b>MPC SSD</b> (or MPC Documents) in a folder with this name.</p>
+        <p class="hint">Your folders show up on that drive in a folder with this name.</p>
       </div>
       <div class="actions"><button class="btn btn--primary" id="save">Save</button></div>
     </section>
@@ -145,9 +152,19 @@ function render(s) {
   $("dot").className = "dot" + (st.connected ? " ok" : (s.enabled && st.err ? " err" : ""));
   $("statusText").textContent = !s.enabled ? "Disconnected" : st.connected ? "Connected" :
     (!s.host ? "Set your MPC's address below" : (s.folders.length ? (st.err ? "Not connected: " + st.err : "Connecting…") : "Add a folder to share"));
-  $("mount").textContent = st.connected ? "On the MPC: " + st.mount.replace("/media/", "").replace("/", " / ") : "";
+  $("mount").textContent = st.connected ? "On the MPC: " + st.mount.replace("/media/az01-internal-sd/MPC Documents", "Internal / MPC Documents").replace("/media/", "").split("/").join(" / ") : "";
   $("toggle").textContent = s.enabled ? "Disconnect" : "Connect";
-  if (!editing) { $("host").value = s.host || ""; $("cname").value = s.computer_name || ""; $("cname").placeholder = s.name; }
+  if (!editing) {
+    $("host").value = s.host || ""; $("cname").value = s.computer_name || ""; $("cname").placeholder = s.name;
+    const sel = $("drive"), drives = st.drives || [];
+    const opts = [["", "Automatic: an SSD, SD card or USB drive if there is one, else Internal"]];
+    drives.forEach(d => opts.push([d.name, d.external ? d.name : "Internal (MPC Documents)"]));
+    if (s.drive && !drives.some(d => d.name === s.drive)) opts.push([s.drive, s.drive + " (not connected)"]);
+    sel.innerHTML = ""; opts.forEach(([v, t]) => { const o = document.createElement("option"); o.value = v; o.textContent = t; sel.append(o); });
+    sel.value = s.drive || "";
+    $("driveHint").textContent = drives.length ? "Where your folders show up in the MPC's browser. Drives you plug into the MPC appear here."
+      : "Connect once to see the MPC's drives (SSD, SD card, USB).";
+  }
   const ul = $("folders"); ul.innerHTML = "";
   if (!s.folders.length) ul.innerHTML = '<div class="empty">No folders yet. Add the folders you want on your MPC.</div>';
   s.folders.forEach((f, i) => {
@@ -161,8 +178,8 @@ function render(s) {
   });
   $("ver").textContent = "MPC Link " + s.version + " · © Padbangers";
 }
-["host", "cname"].forEach(id => { $(id).onfocus = () => editing = true; });
-$("save").onclick = async () => { editing = false; render(await call("/api/settings", { host: $("host").value.trim(), computer_name: $("cname").value.trim() })); };
+["host", "cname", "drive"].forEach(id => { $(id).onfocus = () => editing = true; });
+$("save").onclick = async () => { editing = false; render(await call("/api/settings", { host: $("host").value.trim(), computer_name: $("cname").value.trim(), drive: $("drive").value })); };
 $("add").onclick = async () => { $("add").disabled = true; try { render(await call("/api/folders/add")); } finally { $("add").disabled = false; } };
 $("toggle").onclick = async () => render(await call($("toggle").textContent === "Connect" ? "/api/connect" : "/api/disconnect"));
 $("find").onclick = async () => {

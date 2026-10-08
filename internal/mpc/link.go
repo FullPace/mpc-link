@@ -32,8 +32,110 @@ const (
 	remoteSSHFS = remoteDir + "/sshfs"
 )
 
-// mountBases, in order of preference: a folder on the SSD, else in the internal MPC Documents.
-var mountBases = []string{"/media/MPC SSD", "/media/az01-internal-sd/MPC Documents"}
+// The internal storage as the MPC's browser shows it; MPC Link's folder goes into its MPC Documents.
+const internalBase = "/media/az01-internal-sd/MPC Documents"
+
+// InternalDrive is the name of the internal storage in the settings.
+const InternalDrive = "Internal"
+
+// Drive is a place on the MPC that its browser shows: the internal storage or a drive (SSD, SD card, USB stick).
+type Drive struct {
+	Name     string `json:"name"` // as the MPC shows it ("MPC SSD"), or "Internal"
+	Path     string `json:"path"` // where MPC Link's folder goes
+	External bool   `json:"external"`
+}
+
+// unescape turns /proc/mounts' octal escapes ("MPC\040SSD") back into characters.
+func unescape(s string) string {
+	var b strings.Builder
+	for i := 0; i < len(s); i++ {
+		if s[i] == '\\' && i+3 < len(s) {
+			var v int
+			if _, err := fmt.Sscanf(s[i+1:i+4], "%03o", &v); err == nil {
+				b.WriteByte(byte(v))
+				i += 3
+				continue
+			}
+		}
+		b.WriteByte(s[i])
+	}
+	return b.String()
+}
+
+// Drives lists the drives the MPC's browser shows. External drives are the ones the MPC's disk service (edisksd)
+// mounted under /media, found in mount's helper table; as a fallback (no table), any other disk under /media but the
+// system's own partitions. Network mounts (FUSE: sshfs) never count. The internal storage comes last.
+func Drives(c *ssh.Client) ([]Drive, error) {
+	out, err := Run(c, "cat /run/mount/utab 2>/dev/null; echo ===; cat /proc/mounts")
+	if err != nil {
+		return nil, err
+	}
+	return parseDrives(out), nil
+}
+
+// parseDrives reads the output of "cat /run/mount/utab; echo ===; cat /proc/mounts" (see Drives).
+func parseDrives(out string) []Drive {
+	utab, mounts, _ := strings.Cut(out, "===")
+	seen := map[string]bool{}
+	var drives []Drive
+	add := func(target string) {
+		if !strings.HasPrefix(target, "/media/") || seen[target] {
+			return
+		}
+		name := strings.TrimPrefix(target, "/media/")
+		if strings.Contains(name, "/") || name == "acvs-content" || name == "az01-internal" || name == "az01-internal-sd" {
+			return
+		}
+		seen[target] = true
+		drives = append(drives, Drive{Name: name, Path: target, External: true})
+	}
+	fuse := map[string]bool{}
+	var other []string
+	for _, line := range strings.Split(mounts, "\n") {
+		f := strings.Fields(line)
+		if len(f) < 3 {
+			continue
+		}
+		target := unescape(f[1])
+		if strings.HasPrefix(f[2], "fuse") {
+			fuse[target] = true
+		} else if strings.HasPrefix(f[0], "/dev/") {
+			other = append(other, target)
+		}
+	}
+	for _, line := range strings.Split(utab, "\n") {
+		var target string
+		helper := false
+		for _, kv := range strings.Fields(line) {
+			if strings.HasPrefix(kv, "TARGET=") {
+				target = unescape(strings.TrimPrefix(kv, "TARGET="))
+			}
+			if strings.Contains(kv, "uhelper=edisksd") {
+				helper = true
+			}
+		}
+		if helper && !fuse[target] {
+			add(target)
+		}
+	}
+	if len(drives) == 0 {
+		for _, t := range other {
+			add(t)
+		}
+	}
+	return append(drives, Drive{Name: InternalDrive, Path: internalBase})
+}
+
+// Pick resolves the drive setting: "" = automatic (the first external drive, else the internal storage), else the
+// drive of that name. ok is false when a chosen drive isn't there.
+func Pick(drives []Drive, want string) (Drive, bool) {
+	for _, d := range drives {
+		if want == "" || d.Name == want {
+			return d, true
+		}
+	}
+	return Drive{}, false
+}
 
 // SSHFS is the armv7 sshfs binary (static, see device/), uploaded to the MPC when missing or different.
 var SSHFS []byte
@@ -115,15 +217,6 @@ func EnsureSSHFS(c *ssh.Client) error {
 	return err
 }
 
-// MountPoint picks where the computer's folder goes on the MPC.
-func MountPoint(c *ssh.Client, name string) (string, error) {
-	for _, b := range mountBases {
-		if _, err := Run(c, "test -d "+Quote(b)); err == nil {
-			return b + "/" + name, nil
-		}
-	}
-	return "", errors.New("no MPC SSD or MPC Documents folder found on the MPC")
-}
 
 // Unmount removes a mount and its (empty) folder; harmless when nothing is mounted.
 func Unmount(c *ssh.Client, mnt string) {
@@ -181,13 +274,15 @@ func (p *pipe) Close() error                { return p.w.Close() }
 
 // Status of a Link, for the menu bar.
 type Status struct {
-	Connected bool   `json:"connected"`
-	Mount     string `json:"mount"`
-	Err       string `json:"err"`
+	Connected bool    `json:"connected"`
+	Mount     string  `json:"mount"`
+	Err       string  `json:"err"`
+	Drives    []Drive `json:"drives"` // the MPC's drives, as last seen
 }
 
 // Link keeps the folders mounted on the MPC: it connects, mounts, and reconnects after a lost connection.
 type Link struct {
+	drives  []Drive // the MPC's drives, as last seen (kept while disconnected, for the settings)
 	mu      sync.Mutex
 	status  Status
 	stop    chan struct{}
@@ -231,7 +326,7 @@ func (l *Link) Start(cfg *config.Config, name string, save func()) {
 			if err != nil {
 				msg = err.Error()
 			}
-			l.set(Status{Err: msg})
+			l.set(Status{Err: msg, Drives: l.drives})
 			select {
 			case <-stop:
 				l.set(Status{})
@@ -261,22 +356,41 @@ func (l *Link) once(cfg *config.Config, name string, save func(), stop <-chan st
 	if err := EnsureSSHFS(c); err != nil {
 		return fmt.Errorf("installing sshfs on the MPC: %v", err)
 	}
-	mnt, err := MountPoint(c, name)
+	drives, err := Drives(c)
 	if err != nil {
 		return err
 	}
-	l.set(Status{Connected: true, Mount: mnt})
-	// keepalives notice a vanished MPC (switched off, out of Wi-Fi) within ~30 s
+	l.drives = drives
+	d, ok := Pick(drives, cfg.Drive)
+	if !ok {
+		return fmt.Errorf("the drive %q isn't connected to the MPC", cfg.Drive)
+	}
+	mnt := d.Path + "/" + name
+	l.set(Status{Connected: true, Mount: mnt, Drives: drives})
+	// keepalives notice a vanished MPC (switched off, out of Wi-Fi) within ~30 s; every 20 s the drives are checked
+	// again, so a drive plugged in or out moves the folder (the connection restarts and mounts it where it belongs)
 	alive := make(chan struct{})
 	go func() {
 		t := time.NewTicker(10 * time.Second)
 		defer t.Stop()
-		misses := 0
+		misses, ticks := 0, 0
 		for {
 			select {
 			case <-alive:
 				return
 			case <-t.C:
+				if ticks++; ticks%2 == 0 {
+					if now, err := Drives(c); err == nil {
+						if nd, ok := Pick(now, cfg.Drive); !ok || nd.Path != d.Path {
+							c.Close()
+							return
+						}
+						if len(now) != len(l.drives) {
+							l.drives = now
+							l.set(Status{Connected: true, Mount: mnt, Drives: now})
+						}
+					}
+				}
 				if _, _, err := c.SendRequest("keepalive@openssh.com", true, nil); err != nil {
 					if misses++; misses >= 3 {
 						c.Close()

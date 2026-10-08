@@ -34,6 +34,7 @@ type Pair struct {
 type Config struct {
 	Host         string   `json:"host"`          // the MPC's address, e.g. 192.168.178.58
 	ComputerName string   `json:"computer_name"` // the folder name on the MPC; empty: this computer's name
+	Drive        string   `json:"drive"`         // where on the MPC: "" automatic, "Internal", or a drive's name
 	Folders      []Folder `json:"folders"`
 	Pairs        []Pair   `json:"pairs"`
 	HostKey      string   `json:"host_key,omitempty"` // the MPC's SSH host key, remembered on first connect

@@ -101,6 +101,7 @@ func (a *App) serve() error {
 		var in struct {
 			Host         string `json:"host"`
 			ComputerName string `json:"computer_name"`
+			Drive        string `json:"drive"`
 		}
 		if err := json.NewDecoder(r.Body).Decode(&in); err != nil {
 			return nil, err
@@ -109,7 +110,7 @@ func (a *App) serve() error {
 		if in.Host != a.cfg.Host {
 			a.cfg.HostKey = "" // another MPC: learn its key
 		}
-		a.cfg.Host, a.cfg.ComputerName = in.Host, in.ComputerName
+		a.cfg.Host, a.cfg.ComputerName, a.cfg.Drive = in.Host, in.ComputerName, in.Drive
 		err := a.cfg.Save()
 		a.mu.Unlock()
 		a.restart()
@@ -165,6 +166,7 @@ func (a *App) serve() error {
 type state struct {
 	Host         string          `json:"host"`
 	ComputerName string          `json:"computer_name"`
+	Drive        string          `json:"drive"`
 	Name         string          `json:"name"`
 	Folders      []config.Folder `json:"folders"`
 	Enabled      bool            `json:"enabled"`
@@ -175,7 +177,7 @@ type state struct {
 func (a *App) state() state {
 	a.mu.Lock()
 	defer a.mu.Unlock()
-	return state{Host: a.cfg.Host, ComputerName: a.cfg.ComputerName, Name: a.name(),
+	return state{Host: a.cfg.Host, ComputerName: a.cfg.ComputerName, Drive: a.cfg.Drive, Name: a.name(),
 		Folders: append([]config.Folder{}, a.cfg.Folders...), Enabled: a.enabled, Status: a.link.Status(), Version: version}
 }
 
@@ -202,4 +204,4 @@ func openURL(u string) {
 	}
 }
 
-const version = "0.3.0"
+const version = "0.4.0"

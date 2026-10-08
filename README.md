@@ -6,8 +6,9 @@ copying, no USB stick.
 
 ![MPC Link settings](docs/settings.png)
 
-On the MPC your folders show up like any other folder: **MPC SSD → *your computer's name* → Samples, Projects, …**
-(or under MPC Documents on an MPC without an SSD). Everything you load comes from the computer, everything you save
+On the MPC your folders show up like any other folder, on the drive you choose: for example
+**MPC SSD → *your computer's name* → Samples, Projects, …**, an SD card or USB drive, or the internal storage
+(**Internal → MPC Documents → *your computer's name***). Everything you load comes from the computer, everything you save
 there lands on the computer.
 
 ## What you need
@@ -50,8 +51,12 @@ The first time, the settings page opens in your browser by itself. Later you ope
 
 1. **Your MPC → Find MPC.** MPC Link searches your network and lists the MPCs it finds. Click yours, then **Save**.
    (Or type the MPC's address yourself: on the MPC under *Preferences → Network*, or in your router.)
-2. **Folder name on the MPC** (optional): the name of your computer's folder on the MPC. Empty = your computer's name.
-3. **Shared folders → Add folder…** and pick the folders you want on the MPC: your sample library, a Splice folder,
+2. **Drive on the MPC**: where your folders show up. **Automatic** uses an SSD, SD card or USB drive in the MPC if
+   there is one, else the internal storage; or pick **Internal** or a drive by its name. MPC Link finds the MPC's
+   drives by itself, whatever they're called; one you plug in shows up in the list within about 20 seconds.
+   If the chosen drive isn't in the MPC, MPC Link waits for it and says so in the status.
+3. **Folder name on the MPC** (optional): the name of your computer's folder on that drive. Empty = your computer's name.
+4. **Shared folders → Add folder…** and pick the folders you want on the MPC: your sample library, a Splice folder,
    a projects folder. You can rename each one (the name the MPC shows) or remove it.
 
 A few seconds later the status turns **Connected** and the folders are on the MPC. That's it: from now on MPC Link
@@ -67,6 +72,8 @@ save projects or samples into one of these folders and they're written straight 
 - If the computer goes to sleep, the network drops or you quit MPC Link, the folder disappears from the MPC. It comes
   back by itself when the connection is there again.
 - Projects that reference samples in these folders need the folder there when you load them, just like a USB drive.
+- **Ejecting a drive** on the MPC that holds MPC Link's folder: choose **Disconnect** in MPC Link first (or pick
+  another drive), so the drive isn't busy.
 
 ## The menu bar / tray icon
 
@@ -107,8 +114,9 @@ is only reachable from your own computer.
 MPC Link connects to the MPC over SSH (the MPC is the server, so your computer needs no SSH server and no open port).
 On the MPC it runs [SSHFS](https://github.com/libfuse/sshfs) in *passive* mode: SSHFS mounts a folder and speaks SFTP
 over that same SSH connection, and MPC Link answers with a small SFTP server that only sees your shared folders. The
-MPC's browser lists only drives its own disk service mounted, but shows every folder on them, so the mount point is a
-folder on the SSD (or in MPC Documents). macOS metadata files (`._*`, `.DS_Store`) are hidden from the MPC.
+MPC's browser lists only drives its own disk service (`edisksd`) mounted, but shows every folder on them, so the mount
+point is a folder on one of those drives (or in the internal MPC Documents). MPC Link finds the drives in the MPC's
+mount table (the ones `edisksd` mounted) and checks them again every 20 seconds. macOS metadata files (`._*`, `.DS_Store`) are hidden from the MPC.
 
 ## Remove it
 
