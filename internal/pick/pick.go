@@ -26,6 +26,7 @@ func Folder(prompt string) (string, error) {
 	default:
 		return "", errors.New("no folder chooser on " + runtime.GOOS)
 	}
+	hide(cmd)
 	out, err := cmd.Output()
 	p := strings.TrimRight(strings.TrimSpace(string(out)), `/\`)
 	if err != nil || p == "" {

@@ -5,54 +5,61 @@ import (
 	"encoding/binary"
 	"image"
 	"image/color"
+	"image/draw"
 	"image/png"
-	"math"
 	"runtime"
+
+	"github.com/FullPace/padbangers-link/assets"
 )
 
-// iconPNG draws the menu bar icon: two linked rings, black on transparent (a macOS template image; Windows shows
-// it as is). connected adds a filled dot.
-func iconPNG(connected bool) []byte {
-	const n = 44 // drawn at 2x, shown at 22 pt
-	img := image.NewRGBA(image.Rect(0, 0, n, n))
-	ring := func(cx, cy, r, w float64) {
-		for y := 0; y < n; y++ {
-			for x := 0; x < n; x++ {
-				d := math.Abs(math.Hypot(float64(x)+0.5-cx, float64(y)+0.5-cy) - r)
-				if a := math.Max(0, math.Min(1, w/2+0.5-d)); a > 0 {
-					old := img.RGBAAt(x, y).A
-					img.SetRGBA(x, y, color.RGBA{0, 0, 0, uint8(math.Max(float64(old), a*255))})
-				}
-			}
+// icon returns the tray icon in the platform's format. macOS: the black logo as a template image (the system tints
+// it), faded when not connected. Windows: the red head as an ICO, grey when not connected.
+func icon(connected bool) []byte {
+	if runtime.GOOS == "darwin" {
+		if connected {
+			return assets.TrayMac
 		}
+		return recolor(assets.TrayMac, func(c color.NRGBA) color.NRGBA { c.A = uint8(int(c.A) * 40 / 100); return c })
 	}
-	ring(16, 22, 9, 3.6)
-	ring(28, 22, 9, 3.6)
-	if connected {
-		for y := 0; y < n; y++ {
-			for x := 0; x < n; x++ {
-				if d := math.Hypot(float64(x)+0.5-37, float64(y)+0.5-9); d < 5.5 {
-					img.SetRGBA(x, y, color.RGBA{0, 0, 0, 255})
-				}
-			}
-		}
+	p := assets.TrayWin
+	if !connected {
+		p = recolor(p, func(c color.NRGBA) color.NRGBA {
+			g := uint8((int(c.R)*30 + int(c.G)*59 + int(c.B)*11) / 100)
+			return color.NRGBA{g, g, g, c.A}
+		})
 	}
-	var b bytes.Buffer
-	png.Encode(&b, img)
-	return b.Bytes()
+	if runtime.GOOS == "windows" {
+		return ico(p, 64)
+	}
+	return p
 }
 
-// icon returns the icon in the format the platform's tray wants: PNG, or on Windows an ICO wrapping the PNG.
-func icon(connected bool) []byte {
-	p := iconPNG(connected)
-	if runtime.GOOS != "windows" {
-		return p
+// recolor applies f to every pixel of a PNG.
+func recolor(src []byte, f func(color.NRGBA) color.NRGBA) []byte {
+	img, err := png.Decode(bytes.NewReader(src))
+	if err != nil {
+		return src
 	}
+	b := img.Bounds()
+	out := image.NewNRGBA(b)
+	draw.Draw(out, b, img, b.Min, draw.Src)
+	for y := b.Min.Y; y < b.Max.Y; y++ {
+		for x := b.Min.X; x < b.Max.X; x++ {
+			out.SetNRGBA(x, y, f(out.NRGBAAt(x, y)))
+		}
+	}
+	var buf bytes.Buffer
+	png.Encode(&buf, out)
+	return buf.Bytes()
+}
+
+// ico wraps a square PNG in an ICO container (Windows' tray wants ICO; an ICO may hold PNG data).
+func ico(p []byte, size int) []byte {
 	var b bytes.Buffer
-	binary.Write(&b, binary.LittleEndian, []uint16{0, 1, 1})                 // ICONDIR: reserved, type icon, 1 image
-	b.Write([]byte{44, 44, 0, 0})                                              // width, height, colours, reserved
-	binary.Write(&b, binary.LittleEndian, []uint16{1, 32})                    // planes, bit count
-	binary.Write(&b, binary.LittleEndian, []uint32{uint32(len(p)), 6 + 16})   // size, offset
+	binary.Write(&b, binary.LittleEndian, []uint16{0, 1, 1})               // reserved, type icon, 1 image
+	b.Write([]byte{byte(size), byte(size), 0, 0})                           // width, height, colours, reserved
+	binary.Write(&b, binary.LittleEndian, []uint16{1, 32})                  // planes, bits per pixel
+	binary.Write(&b, binary.LittleEndian, []uint32{uint32(len(p)), 6 + 16}) // data size, data offset
 	b.Write(p)
 	return b.Bytes()
 }
