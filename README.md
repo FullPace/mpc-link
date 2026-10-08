@@ -11,6 +11,10 @@ On the MPC your folders show up like any other folder, on the drive you choose: 
 (**Internal → MPC Documents → *your computer's name***). Everything you load comes from the computer, everything you save
 there lands on the computer.
 
+![The computer's folder in the MPC's browser](docs/mpc-browser.png)
+
+*The MPC's browser on the SSD: "Mac Mini" is the computer's folder, with its shared folders inside.*
+
 ## What you need
 
 - A standalone MPC with **root SSH access**: a modded MPC running the **Hakai** firmware,
