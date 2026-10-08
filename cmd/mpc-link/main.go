@@ -1,4 +1,4 @@
-// Padbangers Link: the computer's folders in the MPC's browser, over the network.
+// MPC Link: the computer's folders in the MPC's browser, over the network.
 package main
 
 import (
@@ -10,9 +10,9 @@ import (
 	"strings"
 	"syscall"
 
-	"github.com/FullPace/padbangers-link/device"
-	"github.com/FullPace/padbangers-link/internal/config"
-	"github.com/FullPace/padbangers-link/internal/mpc"
+	"github.com/FullPace/mpc-link/device"
+	"github.com/FullPace/mpc-link/internal/config"
+	"github.com/FullPace/mpc-link/internal/mpc"
 )
 
 func computerName(cfg *config.Config) string {

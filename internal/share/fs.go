@@ -16,7 +16,7 @@ import (
 
 	"github.com/pkg/sftp"
 
-	"github.com/FullPace/padbangers-link/internal/config"
+	"github.com/FullPace/mpc-link/internal/config"
 )
 
 type fs struct {

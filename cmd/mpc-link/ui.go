@@ -7,8 +7,8 @@ import (
 
 	"fyne.io/systray"
 
-	"github.com/FullPace/padbangers-link/internal/config"
-	"github.com/FullPace/padbangers-link/internal/mpc"
+	"github.com/FullPace/mpc-link/internal/config"
+	"github.com/FullPace/mpc-link/internal/mpc"
 )
 
 // runUI runs the menu bar / tray app: status, settings page, connect / disconnect, quit.
@@ -23,7 +23,7 @@ func runUI(cfg *config.Config) {
 
 func onReady(app *App) {
 	systray.SetTemplateIcon(icon(false), icon(false))
-	systray.SetTooltip("Padbangers Link")
+	systray.SetTooltip("MPC Link")
 	status := systray.AddMenuItem("Not connected", "")
 	status.Disable()
 	mount := systray.AddMenuItem("", "")
@@ -33,7 +33,7 @@ func onReady(app *App) {
 	settings := systray.AddMenuItem("Settings…", "Choose the MPC and the folders to share")
 	toggle := systray.AddMenuItem("Disconnect", "")
 	systray.AddSeparator()
-	quit := systray.AddMenuItem("Quit Padbangers Link", "Remove the folders from the MPC and quit")
+	quit := systray.AddMenuItem("Quit MPC Link", "Remove the folders from the MPC and quit")
 
 	update := func(s mpc.Status) {
 		st := app.state()

@@ -1,4 +1,4 @@
-// Package config holds Padbangers Link's settings: which MPC, which folders it shares, and how they sync.
+// Package config holds MPC Link's settings: which MPC, which folders it shares, and how they sync.
 package config
 
 import (
@@ -39,13 +39,18 @@ type Config struct {
 	HostKey      string   `json:"host_key,omitempty"` // the MPC's SSH host key, remembered on first connect
 }
 
-// Dir is where the settings live: ~/Library/Application Support/Padbangers Link, %AppData%\Padbangers Link.
+// Dir is where the settings live: ~/Library/Application Support/MPC Link, %AppData%\MPC Link. Settings from the
+// app's first name, "Padbangers Link", move there once.
 func Dir() string {
 	base, err := os.UserConfigDir()
 	if err != nil {
 		base = "."
 	}
-	return filepath.Join(base, "Padbangers Link")
+	dir := filepath.Join(base, "MPC Link")
+	if _, err := os.Stat(dir); os.IsNotExist(err) {
+		os.Rename(filepath.Join(base, "Padbangers Link"), dir)
+	}
+	return dir
 }
 
 func path() string { return filepath.Join(Dir(), "config.json") }

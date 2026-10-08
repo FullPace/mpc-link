@@ -1,4 +1,4 @@
-// Package device holds the programs Padbangers Link puts on the MPC.
+// Package device holds the programs MPC Link puts on the MPC.
 package device
 
 import _ "embed"

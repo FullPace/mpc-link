@@ -1,4 +1,4 @@
-module github.com/FullPace/padbangers-link
+module github.com/FullPace/mpc-link
 
 go 1.27.1
 

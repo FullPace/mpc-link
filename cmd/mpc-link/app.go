@@ -12,11 +12,12 @@ import (
 	"strconv"
 	"sync"
 
-	"github.com/FullPace/padbangers-link/internal/config"
-	"github.com/FullPace/padbangers-link/internal/discover"
-	"github.com/FullPace/padbangers-link/internal/mpc"
-	"github.com/FullPace/padbangers-link/internal/pick"
-	"github.com/FullPace/padbangers-link/internal/web"
+	"github.com/FullPace/mpc-link/assets"
+	"github.com/FullPace/mpc-link/internal/config"
+	"github.com/FullPace/mpc-link/internal/discover"
+	"github.com/FullPace/mpc-link/internal/mpc"
+	"github.com/FullPace/mpc-link/internal/pick"
+	"github.com/FullPace/mpc-link/internal/web"
 )
 
 // App ties the settings, the link to the MPC and the settings page together.
@@ -69,11 +70,15 @@ func (a *App) serve() error {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Query().Get("t") != a.token {
-			http.Error(w, "open the settings from the Padbangers Link menu", http.StatusForbidden)
+			http.Error(w, "open the settings from the MPC Link menu", http.StatusForbidden)
 			return
 		}
 		w.Header().Set("Content-Type", "text/html; charset=utf-8")
 		w.Write([]byte(web.Page))
+	})
+	mux.HandleFunc("/banner.png", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "image/png")
+		w.Write(assets.Banner)
 	})
 	api := func(path string, h func(r *http.Request) (any, error)) {
 		mux.HandleFunc(path, func(w http.ResponseWriter, r *http.Request) {
@@ -197,4 +202,4 @@ func openURL(u string) {
 	}
 }
 
-const version = "0.2.0"
+const version = "0.3.0"

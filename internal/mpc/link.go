@@ -1,6 +1,6 @@
 // Package mpc connects to an MPC over SSH and mounts the computer's shared folders on it.
 //
-// The MPC (Hakai firmware) runs OpenSSH with root login and an empty password. Padbangers Link copies a static
+// The MPC (Hakai firmware) runs OpenSSH with root login and an empty password. MPC Link copies a static
 // sshfs to /data/hacks/link/ and runs it in passive mode: sshfs speaks SFTP over the SSH session's stdin/stdout,
 // and this side answers with share.Serve. So the computer needs no SSH server and no open port. The mount is a
 // folder on a drive the MPC already shows (MPC SSD/<computer>, else MPC Documents/<computer>): the MPC's browser
@@ -23,8 +23,8 @@ import (
 	"github.com/pkg/sftp"
 	"golang.org/x/crypto/ssh"
 
-	"github.com/FullPace/padbangers-link/internal/config"
-	"github.com/FullPace/padbangers-link/internal/share"
+	"github.com/FullPace/mpc-link/internal/config"
+	"github.com/FullPace/mpc-link/internal/share"
 )
 
 const (

@@ -9,11 +9,11 @@ import (
 	"image/png"
 	"runtime"
 
-	"github.com/FullPace/padbangers-link/assets"
+	"github.com/FullPace/mpc-link/assets"
 )
 
-// icon returns the tray icon in the platform's format. macOS: the black logo as a template image (the system tints
-// it), faded when not connected. Windows: the red head as an ICO, grey when not connected.
+// icon returns the tray icon in the platform's format. macOS: the logo as a template image (the system tints
+// it), faded when not connected. Windows: the logo as an ICO, faded when not connected.
 func icon(connected bool) []byte {
 	if runtime.GOOS == "darwin" {
 		if connected {
@@ -23,10 +23,7 @@ func icon(connected bool) []byte {
 	}
 	p := assets.TrayWin
 	if !connected {
-		p = recolor(p, func(c color.NRGBA) color.NRGBA {
-			g := uint8((int(c.R)*30 + int(c.G)*59 + int(c.B)*11) / 100)
-			return color.NRGBA{g, g, g, c.A}
-		})
+		p = recolor(p, func(c color.NRGBA) color.NRGBA { c.A = uint8(int(c.A) * 45 / 100); return c }) // black and white already
 	}
 	if runtime.GOOS == "windows" {
 		return ico(p, 64)

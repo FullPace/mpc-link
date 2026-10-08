@@ -1,24 +1,36 @@
-# Renders the logo SVGs to PNGs (transparent) with headless Chromium: python3 render.py
+# Renders the square MPC Link logo (SVG/black.svg; white.svg is its inverse) to the app's PNGs with headless Chromium, keeping it square.
 import pathlib
 from playwright.sync_api import sync_playwright
+from PIL import Image
 here = pathlib.Path(__file__).parent
-HEAD = "44 0 144 113"   # the head with its headphone band, without the "d" and "b": legible at tray sizes
-jobs = [  # (svg, out, width, height, pad: fraction of the box around the logo, viewBox or None for the whole logo)
-    ("black.svg", "tray-mac.png", 72, 44, 0.04, None),         # menu bar, 2x of 36x22 pt: the whole logo
-    ("red.svg", "tray-win.png", 64, 64, 0.02, HEAD),           # Windows tray, square
-    ("red.svg", "appicon-1024.png", 1024, 1024, 0.10, HEAD),   # app icon source
-]
+def shot(page, svg, size, out):
+    page.set_viewport_size({"width": size, "height": size})
+    src = (here / "SVG" / svg).read_text().replace("<svg ", f'<svg width="{size}" height="{size}" ', 1)
+    page.set_content(f'<html><body style="margin:0;background:transparent">{src}</body></html>')
+    page.screenshot(path=str(here / out), omit_background=True, clip={"x": 0, "y": 0, "width": size, "height": size})
 with sync_playwright() as p:
-    b = p.chromium.launch()
-    for svg, out, w, h, pad, vb in jobs:
-        page = b.new_page(viewport={"width": w, "height": h})
-        src = (here / svg).read_text()
-        if vb:
-            src = src.replace('viewBox="0 0 232.3 113.18"', 'viewBox="%s"' % vb, 1)
-        page.set_content(f'<html><body style="margin:0;background:transparent;display:flex;align-items:center;justify-content:center;width:{w}px;height:{h}px">'
-                         f'<div style="width:{w*(1-2*pad)}px;height:{h*(1-2*pad)}px;display:flex;align-items:center;justify-content:center">'
-                         + src.replace("<svg ", '<svg style="max-width:100%;max-height:100%;width:100%;height:100%" preserveAspectRatio="xMidYMid meet" ', 1)
-                         + "</div></body></html>")
-        page.screenshot(path=str(here / out), omit_background=True)
-        print(out)
+    b = p.chromium.launch(); page = b.new_page()
+    shot(page, "black.svg", 44, "tray-mac-src.png")       # menu bar: 22x22 pt at 2x
+    shot(page, "black.svg", 64, "tray-win.png")           # Windows tray
+    shot(page, "black.svg", 1024, "appicon-1024.png")     # app icon source
     b.close()
+# template image: the black body stays, the white parts (screen, pads) become see-through
+im = Image.open(here / "tray-mac-src.png").convert("RGBA")
+px = im.load()
+for y in range(im.size[1]):
+    for x in range(im.size[0]):
+        r, g, b_, a = px[x, y]
+        lum = (r * 30 + g * 59 + b_ * 11) // 100
+        px[x, y] = (0, 0, 0, a * (255 - lum) // 255)
+im.save(here / "tray-mac.png")
+c = Image.new("RGBA", (420, 300), (236, 236, 236, 255))
+for i, s in enumerate((22, 44)):
+    c.alpha_composite(Image.open(here / "tray-mac.png").resize((s, s), Image.LANCZOS), (10 + i * 60, 10))
+d = Image.new("RGBA", (130, 64), (40, 40, 42, 255)); c.alpha_composite(d, (130, 0))
+w = Image.open(here / "tray-mac.png"); wd = Image.new("RGBA", w.size, (255, 255, 255, 0)); wd.putalpha(w.split()[3])
+c.alpha_composite(wd.resize((22, 22), Image.LANCZOS), (150, 20)); c.alpha_composite(wd, (190, 10))
+for i, s in enumerate((16, 32, 64)):
+    c.alpha_composite(Image.open(here / "tray-win.png").resize((s, s), Image.LANCZOS), (10 + i * 80, 90))
+c.alpha_composite(Image.open(here / "appicon-1024.png").resize((128, 128), Image.LANCZOS), (280, 90))
+c.save(here / "preview.png")
+print("ok")
