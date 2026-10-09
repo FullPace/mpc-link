@@ -6,6 +6,10 @@ GO=${GO:-go}
 VERSION=$(sed -n 's/^const version = "\(.*\)"/\1/p' cmd/mpc-link/app.go)
 APP="build/MPC Link.app"
 rm -rf "$APP" && mkdir -p "$APP/Contents/MacOS"
+# without this, clang (cgo) stamps the build Mac's own macOS version as the minimum into the binary.
+# 13.0 = what the Go runtime (Go 1.27) itself needs; the flags also go into Go's build cache key.
+MINOS=13.0
+export MACOSX_DEPLOYMENT_TARGET=$MINOS CGO_CFLAGS="-mmacosx-version-min=$MINOS" CGO_LDFLAGS="-mmacosx-version-min=$MINOS"
 CGO_ENABLED=1 GOARCH=arm64 $GO build -trimpath -ldflags "-s -w" -o build/pbl-arm64 ./cmd/mpc-link
 CGO_ENABLED=1 GOARCH=amd64 $GO build -trimpath -ldflags "-s -w" -o build/pbl-amd64 ./cmd/mpc-link
 lipo -create -output "$APP/Contents/MacOS/mpc-link" build/pbl-arm64 build/pbl-amd64
@@ -28,7 +32,7 @@ cat > "$APP/Contents/Info.plist" <<PLIST
   <key>CFBundlePackageType</key><string>APPL</string>
   <key>CFBundleShortVersionString</key><string>$VERSION</string>
   <key>CFBundleVersion</key><string>$VERSION</string>
-  <key>LSMinimumSystemVersion</key><string>11.0</string>
+  <key>LSMinimumSystemVersion</key><string>$MINOS</string>
   <key>CFBundleIconFile</key><string>AppIcon</string>
   <key>LSUIElement</key><true/>
   <key>NSHighResolutionCapable</key><true/>

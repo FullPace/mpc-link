@@ -22,7 +22,7 @@ there lands on the computer.
   Developed and tested on an **MPC X** with MPC OS 3.9.1; the other first-generation devices (MPC Live / Live II,
   One, Key 61, Force) run the same system and should work the same way.
 - Your computer and the MPC on the **same network** (Wi-Fi or cable).
-- **macOS 11** or newer (Apple Silicon or Intel), or **Windows 10/11** (64-bit, Intel/AMD or ARM).
+- **macOS 13** (Ventura) or newer (Apple Silicon or Intel), or **Windows 10/11** (64-bit, Intel/AMD or ARM).
 
 Nothing is installed permanently on the MPC except one small program (`/data/hacks/link/sshfs`, 1 MB) that MPC Link
 copies there the first time it connects. The MPC's firmware is not touched.
