@@ -132,7 +132,7 @@ The settings are in `~/Library/Application Support/MPC Link` (macOS) or `%AppDat
 Needs Go 1.23 or newer (macOS builds need the Xcode command line tools for the menu bar code).
 
 ```sh
-git clone https://github.com/FullPace/mpc-link && cd mpc-link
+git clone https://github.com/padbangers/mpc-link && cd mpc-link
 ./scripts/make-mac-app.sh     # -> build/MPC Link.app (universal)
 ./scripts/make-windows.sh     # -> build/MPC Link-amd64.exe, build/MPC Link-arm64.exe
 go run ./cmd/mpc-link -headless -host <MPC address> -share "Samples=/path/to/samples"   # terminal mode
