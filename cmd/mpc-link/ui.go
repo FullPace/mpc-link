@@ -11,7 +11,7 @@ import (
 	"github.com/FullPace/mpc-link/internal/mpc"
 )
 
-// runUI runs the menu bar / tray app: status, settings page, connect / disconnect, quit.
+// runUI runs the menu bar / tray app: status, settings page, connect / disconnect, credits, quit.
 func runUI(cfg *config.Config) {
 	app := newApp(cfg)
 	if err := app.serve(); err != nil {
@@ -33,6 +33,7 @@ func onReady(app *App) {
 	settings := systray.AddMenuItem("Settings…", "Choose the MPC and the folders to share")
 	toggle := systray.AddMenuItem("Disconnect", "")
 	systray.AddSeparator()
+	credits := systray.AddMenuItem("Credits…", "Made by Padbangers, licenses")
 	quit := systray.AddMenuItem("Quit MPC Link", "Remove the folders from the MPC and quit")
 
 	update := func(s mpc.Status) {
@@ -73,6 +74,8 @@ func onReady(app *App) {
 			select {
 			case <-settings.ClickedCh:
 				openURL(app.url)
+			case <-credits.ClickedCh:
+				openURL(app.url + "&p=credits")
 			case <-toggle.ClickedCh:
 				app.setEnabled(!app.state().Enabled)
 				update(app.link.Status())

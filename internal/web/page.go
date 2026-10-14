@@ -74,12 +74,25 @@ li .path { flex:1; color:var(--text-dim); font-size:14px; overflow:hidden; text-
 .empty { color:var(--text-dim); font-size:15px; padding:0 0 10px; }
 .found { display:flex; flex-wrap:wrap; gap:8px; margin-top:10px; color:var(--text-dim); font-size:14px; }
 
+.credits p { margin:0 0 12px; }
+.credits a, .site-footer button { color:var(--cyan-dim); }
+.credits dl { margin:0; display:grid; grid-template-columns:max-content 1fr; gap:6px 18px; font-size:15px; }
+.credits dt { font-weight:600; }
+.credits dd { margin:0; color:var(--text-dim); }
+.credits details { margin-top:14px; font-size:14px; }
+.credits summary { cursor:pointer; font-weight:600; }
+.credits pre { white-space:pre-wrap; font:13px/1.5 ui-monospace, Menlo, Consolas, monospace; color:var(--text-dim);
+  background:var(--bg); border:1px solid var(--edge); border-radius:var(--radius-sm); padding:12px 14px; }
+.site-footer button { background:none; border:0; font:inherit; cursor:pointer; padding:0; color:var(--cyan); }
+[hidden] { display:none !important; }
+
 .site-footer { flex-shrink:0; background:linear-gradient(var(--display-2), var(--display)); color:#cfcec9;
   text-align:center; padding:22px 28px; font-size:13px; }
 .site-footer a { color:var(--cyan); text-decoration:none; }
 .site-footer small { color:#8b8c8d; display:block; margin-top:6px; }
 
 @media (max-width:600px) {
+  .credits dl { grid-template-columns:1fr; } .credits dd { margin-bottom:6px; }
   .site-header__inner { flex-direction:column; gap:10px; }
   li { flex-wrap:wrap; } li input { width:100%; }
 }
@@ -93,7 +106,7 @@ li .path { flex:1; color:var(--text-dim); font-size:14px; overflow:hidden; text-
   </div>
 </header>
 <main>
-  <div class="page">
+  <div class="page" id="settingsView">
     <h1>MPC Link</h1>
     <p class="page__lead">Your computer's folders in your MPC's browser, over the network. No controller mode, no copying.</p>
 
@@ -132,9 +145,71 @@ li .path { flex:1; color:var(--text-dim); font-size:14px; overflow:hidden; text-
       <div class="actions"><button class="btn btn--primary" id="add">Add folder…</button></div>
     </section>
   </div>
+  <div class="page credits" id="creditsView" hidden>
+    <h1>Credits</h1>
+    <p class="page__lead"><span id="cver">MPC Link</span> by <a href="https://padbangers.com" target="_blank" rel="noopener">Padbangers</a></p>
+
+    <section class="card">
+      <h2>MPC Link</h2>
+      <p>Made by Padbangers: <a href="https://padbangers.com" target="_blank" rel="noopener">padbangers.com</a>.
+        Source code: <a href="https://github.com/padbangers/mpc-link" target="_blank" rel="noopener">github.com/padbangers/mpc-link</a>.</p>
+      <p>Free software under the MIT License. © 2026 Padbangers.</p>
+      <details>
+        <summary>MIT License</summary>
+<pre>MIT License
+
+Copyright (c) 2026 Padbangers
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated
+documentation files (the "Software"), to deal in the Software without restriction, including without limitation the
+rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit
+persons to whom the Software is furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all copies or substantial portions of the
+Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE
+WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
+COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.</pre>
+      </details>
+    </section>
+
+    <section class="card">
+      <h2>On your MPC</h2>
+      <p>MPC Link copies one program to the MPC, unmodified and as a separate program: <a href="https://github.com/libfuse/sshfs" target="_blank" rel="noopener">SSHFS</a> 3.7.3,
+        statically linked with libfuse 3 and GLib.</p>
+      <dl>
+        <dt>SSHFS</dt><dd>GPL-2.0 · <a href="https://github.com/libfuse/sshfs/releases/tag/sshfs-3.7.3" target="_blank" rel="noopener">source</a></dd>
+        <dt>libfuse</dt><dd>GPL-2.0, library LGPL-2.1 · <a href="https://github.com/libfuse/libfuse" target="_blank" rel="noopener">source</a></dd>
+        <dt>GLib</dt><dd>LGPL-2.1 · <a href="https://gitlab.gnome.org/GNOME/glib" target="_blank" rel="noopener">source</a></dd>
+      </dl>
+    </section>
+
+    <section class="card">
+      <h2>Built with</h2>
+      <dl>
+        <dt>Go</dt><dd>BSD-3-Clause · <a href="https://go.dev" target="_blank" rel="noopener">go.dev</a></dd>
+        <dt>golang.org/x/crypto, x/sys</dt><dd>BSD-3-Clause · <a href="https://pkg.go.dev/golang.org/x/crypto" target="_blank" rel="noopener">pkg.go.dev</a></dd>
+        <dt>pkg/sftp</dt><dd>BSD-2-Clause · <a href="https://github.com/pkg/sftp" target="_blank" rel="noopener">github.com/pkg/sftp</a></dd>
+        <dt>kr/fs</dt><dd>BSD-3-Clause · <a href="https://github.com/kr/fs" target="_blank" rel="noopener">github.com/kr/fs</a></dd>
+        <dt>fyne.io/systray</dt><dd>Apache-2.0 · <a href="https://github.com/fyne-io/systray" target="_blank" rel="noopener">github.com/fyne-io/systray</a></dd>
+        <dt>godbus/dbus</dt><dd>BSD-2-Clause · <a href="https://github.com/godbus/dbus" target="_blank" rel="noopener">github.com/godbus/dbus</a></dd>
+      </dl>
+    </section>
+
+    <section class="card">
+      <h2>Trademarks</h2>
+      <p>MPC Link is not affiliated with, endorsed by or sponsored by Akai Professional or inMusic.
+        MPC is a trademark of inMusic Brands, Inc.</p>
+    </section>
+
+    <div class="actions"><button class="btn btn--ghost" id="back">Back to settings</button></div>
+  </div>
 </main>
 <footer class="site-footer">
   <a href="https://padbangers.com" target="_blank" rel="noopener">padbangers.com</a>
+  · <button id="creditsLink">Credits</button>
   <small id="ver"></small>
 </footer>
 <script>
@@ -177,7 +252,18 @@ function render(s) {
     li.append(name, path, rm); ul.append(li);
   });
   $("ver").textContent = "MPC Link " + s.version + " · © Padbangers";
+  $("cver").textContent = "MPC Link " + s.version;
 }
+// the settings and the credits are two views of this page; ?p=credits (the menu's Credits…) opens the credits
+function show(credits) {
+  $("settingsView").hidden = credits; $("creditsView").hidden = !credits;
+  $("creditsLink").textContent = credits ? "Settings" : "Credits";
+  const q = new URLSearchParams(location.search); credits ? q.set("p", "credits") : q.delete("p");
+  history.replaceState(null, "", "?" + q); scrollTo(0, 0);
+}
+show(new URLSearchParams(location.search).get("p") === "credits");
+$("creditsLink").onclick = () => show($("creditsView").hidden);
+$("back").onclick = () => show(false);
 ["host", "cname", "drive"].forEach(id => { $(id).onfocus = () => editing = true; });
 $("save").onclick = async () => { editing = false; render(await call("/api/settings", { host: $("host").value.trim(), computer_name: $("cname").value.trim(), drive: $("drive").value })); };
 $("add").onclick = async () => { $("add").disabled = true; try { render(await call("/api/folders/add")); } finally { $("add").disabled = false; } };

@@ -33,8 +33,8 @@ copies there the first time it connects. The MPC's firmware is not touched.
 
 1. Download `MPC-Link-<version>-macOS.zip` from [Releases](../../releases) and unzip it.
 2. Drag **MPC Link** into your **Applications** folder.
-3. Open it. The app isn't signed by Apple, so the first time macOS says it can't check it: **right-click the app →
-   Open → Open** (or System Settings → Privacy & Security → *Open Anyway*).
+3. Open it. The app is signed and notarized by Apple; the first time macOS only asks whether you want to open an app
+   downloaded from the internet: click **Open**.
 4. If macOS asks whether MPC Link may find devices on your local network, click **Allow**.
 
 MPC Link lives in the **menu bar** (the MPC icon), not in the Dock.
@@ -147,6 +147,7 @@ rendered from `assets/SVG/` by `assets/render.py`.
 - SSHFS (copied to the MPC as a separate program): GPL-2.0, with libfuse and GLib; source and details in
   [`device/README.md`](device/README.md).
 - Go libraries: [golang.org/x/crypto](https://pkg.go.dev/golang.org/x/crypto) (BSD-3-Clause),
-  [pkg/sftp](https://github.com/pkg/sftp) (BSD-2-Clause), [fyne.io/systray](https://github.com/fyne-io/systray)
-  (Apache-2.0).
+  [pkg/sftp](https://github.com/pkg/sftp) (BSD-2-Clause), [kr/fs](https://github.com/kr/fs) (BSD-3-Clause),
+  [fyne.io/systray](https://github.com/fyne-io/systray) (Apache-2.0), [godbus/dbus](https://github.com/godbus/dbus)
+  (BSD-2-Clause). The same list is under **Credits…** in the app's menu.
 - Not affiliated with Akai Professional or inMusic. MPC is a trademark of inMusic Brands.
